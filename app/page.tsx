@@ -251,7 +251,22 @@ function processFormAI() {
             Ubah Soal Word Menjadi <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Google Form Otomatis</span>
           </h1>
-          <p className="text-sm font-medium text-emerald-600 tracking-wide mt-2">Dibuat Oleh: Fahri Zanuar Pradian</p>
+          <div className="mt-4 space-y-1">
+            <p className="text-sm font-medium text-emerald-600 tracking-wide">
+              Dibuat Oleh:{" "}
+              <a 
+                href="https://fahri-zanuar-pradian-portofolio.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-emerald-800 transition-colors font-bold"
+              >
+                Fahri Zanuar Pradian
+              </a>
+            </p>
+            <p className="text-sm text-slate-500">
+              Hubungi saya dengan meng-klik nama di atas untuk pembuatan aplikasi berbasis AI, sistem web cerdas, atau kolaborasi proyek IT lainnya!
+            </p>
+          </div>
           <p className="text-xl text-slate-700 max-w-2xl mx-auto leading-relaxed pt-2">
             Tidak perlu copy-paste satu per satu. Unggah file Word Bapak/Ibu, dan biarkan sistem membuatkan Google Form-nya.
           </p>
