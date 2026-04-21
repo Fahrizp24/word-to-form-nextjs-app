@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import io
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
@@ -51,17 +52,13 @@ def extract_text_from_docx(file_path):
 
 @router.post("/convert")
 async def convert_word_to_json(file: UploadFile = File(...)):
-    # Nama file sementara
-    temp_filename = f"temp_{file.filename}"
-    
     try:
-        # 1. Simpan file yang diupload ke lokal sementara
-        with open(temp_filename, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+        # 1. Baca file langsung ke memory (tanpa simpan ke disk, serverless-friendly)
+        content = await file.read()
+        file_stream = io.BytesIO(content)
 
-        # 2. Ekstrak teks mentah dari file Word
-        raw_text = extract_text_from_docx(temp_filename)
+        # 2. Ekstrak teks mentah dari file Word memori
+        raw_text = extract_text_from_docx(file_stream)
         
         if not raw_text.strip():
             raise HTTPException(status_code=400, detail="File Word kosong atau tidak terbaca.")
@@ -163,9 +160,10 @@ Jika teks sangat berantakan, gunakan logika inferensi terbaikmu untuk menentukan
             raise HTTPException(status_code=500, detail="AI sedang sibuk atau kuota habis. Coba lagi 1 menit lagi.")
 
         # Tambahkan ini sebentar buat cek
-        print("Cek model yang tersedia...")
-        for m in client.models.list():
-            print(f"- {m.name}")
+        # print("Cek model yang tersedia...")
+        # for m in client.models.list():
+        #     print(f"- {m.name}")
+        
         # 5. Parsing & Cleaning Response AI
         raw_ai_response = response.text
         
@@ -192,11 +190,7 @@ Jika teks sangat berantakan, gunakan logika inferensi terbaikmu untuk menentukan
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    
-    finally:
-        # Hapus file sementara agar tidak memenuhi disk
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
+
 
 app.include_router(router)
 

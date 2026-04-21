@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import "katex/dist/katex.min.css";
 import katex from "katex";
+import { toast, Toaster } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -116,7 +117,7 @@ export default function Home() {
   const copyToClipboard = () => {
     if (!result) return;
     navigator.clipboard.writeText(JSON.stringify(result, null, 2));
-    alert("JSON berhasil disalin ke clipboard!");
+    toast.success("Salinan berhasil ditaruh di clipboard!");
   };
 
   const downloadJson = () => {
@@ -229,11 +230,12 @@ function processFormAI() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    alert(isTemplateMode ? "Skrip UPDATE berhasil diunduh!" : "Skrip FORM BARU berhasil diunduh!");
+    toast.success(isTemplateMode ? "Skrip UPDATE berhasil diunduh!" : "Skrip FORM BARU berhasil diunduh!");
   };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-blue-100 uppercase-none">
+      <Toaster position="top-center" richColors />
       {/* Background Ornaments */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-[120px]" />
