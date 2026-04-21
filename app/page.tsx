@@ -169,6 +169,9 @@ function processFormAI() {
   );
   `}
 
+  // Ubah menjadi Kuis agar Kunci Jawaban & Poin aktif
+  form.setIsQuiz(true);
+
   const items = data.items || data.questions || [];
 
   items.forEach((item, index) => {
@@ -185,33 +188,43 @@ function processFormAI() {
       
       // Jika masill kosong, beri penamaan default agar Google Script tidak error
       if (rawText.trim() === "") {
-        rawText = "Pertanyaan " + (index + 1) + " (Teks tidak terbaca oleh AI)";
+        rawText = "Teks tidak terbaca oleh AI";
       }
       
-      // Tambahkan kategori jika ada
-      const text = rawText + (item.category ? " [" + item.category + "]" : "");
+      // Tambahkan nomor urut dan kategori
+      const text = (index + 1) + ". " + rawText + (item.category ? " [" + item.category + "]" : "");
+      
+      // Cek Kunci Jawaban
+      const rawAns = item.answer_key ? item.answer_key.toString().toLowerCase() : "";
       
       if (type === "multiple_choice") {
-        const mc = form.addMultipleChoiceItem().setTitle(text);
+        const mc = form.addMultipleChoiceItem().setTitle(text).setPoints(1);
         if (item.options && typeof item.options === 'object') {
-          const choices = Object.values(item.options)
-            .filter(v => v !== null && v.toString().trim() !== "")
-            .map(v => mc.createChoice(v.toString()));
+          const choices = Object.entries(item.options)
+            .filter(([k, v]) => v !== null && v.toString().trim() !== "")
+            .map(([k, v]) => {
+              const isCorrect = rawAns === k.toLowerCase();
+              return mc.createChoice(v.toString(), isCorrect);
+            });
           if (choices.length > 0) mc.setChoices(choices);
         }
       } 
       else if (type === "checkbox") {
-        const cb = form.addCheckboxItem().setTitle(text);
+        const cb = form.addCheckboxItem().setTitle(text).setPoints(2);
         if (item.options && typeof item.options === 'object') {
-          const choices = Object.values(item.options)
-            .filter(v => v !== null && v.toString().trim() !== "")
-            .map(v => cb.createChoice(v.toString()));
+          const choices = Object.entries(item.options)
+            .filter(([k, v]) => v !== null && v.toString().trim() !== "")
+            .map(([k, v]) => {
+              // Untuk checkbox, answer key bisa berupa koma (e.g. "B, C")
+              const isCorrect = rawAns.includes(k.toLowerCase());
+              return cb.createChoice(v.toString(), isCorrect);
+            });
           if (choices.length > 0) cb.setChoices(choices);
         }
       } 
       else {
         // Fallback untuk essay dan curriculum_objective (atau apa pun yang tak terduga)
-        form.addParagraphTextItem().setTitle(text);
+        form.addParagraphTextItem().setTitle(text).setPoints(5);
       }
     } catch (e) {
       Logger.log("Error pada item ke-" + (index+1) + ": " + e.message);
