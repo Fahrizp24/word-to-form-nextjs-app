@@ -141,23 +141,38 @@ Wajib mengembalikan output dalam format JSON murni tanpa kata-kata pembuka atau 
 Jika teks sangat berantakan, gunakan logika inferensi terbaikmu untuk menentukan di mana sebuah pertanyaan dimulai dan berakhir berdasarkan pola penomoran dokumen Indonesia.
 """
 
-        # 4. Panggil Gemini AI
-        model_name = "gemini-3-flash-preview" 
-        
-        try:
-            print(f"Menggunakan model: {model_name}")
-            response = client.models.generate_content(
-                model=model_name,
-                contents=f"{system_instruction}\n\nTEKS SUMBER DARI WORD:\n{raw_text}"
-            )
-            
-            # Jika response berhasil
-            raw_ai_response = response.text
-            print("Berhasil mendapatkan respon dari AI!")
-        except Exception as ai_err:
-            # Jika masih error (misal kuota habis), kita cetak error spesifiknya
-            print(f"AI Error: {ai_err}")
-            raise HTTPException(status_code=500, detail="AI sedang sibuk atau kuota habis. Coba lagi 1 menit lagi.")
+        # 4. Panggil Gemini AI dengan fallback ketika model pertama sedang sibuk/overloaded
+        model_choices = [
+            "models/gemini-2.5-flash",
+            "models/gemini-2.0-flash",
+            "models/gemini-3-flash-preview",
+        ]
+        response = None
+        raw_ai_response = ""
+        last_error = None
+
+        for model_name in model_choices:
+            try:
+                print(f"Menggunakan model: {model_name}")
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=f"{system_instruction}\n\nTEKS SUMBER DARI WORD:\n{raw_text}"
+                )
+                raw_ai_response = response.text
+                print("Berhasil mendapatkan respon dari AI!")
+                break
+            except Exception as ai_err:
+                error_text = str(ai_err)
+                print(f"AI Error pada {model_name}: {error_text}")
+                last_error = error_text
+                if "UNAVAILABLE" in error_text or "RESOURCE_EXHAUSTED" in error_text or "quota" in error_text.lower():
+                    # Coba model fallback saat model mengalami beban tinggi atau batas kuota sementara
+                    continue
+                raise HTTPException(status_code=500, detail=f"AI sedang sibuk atau kuota habis. Detail: {error_text}")
+
+        if response is None:
+            detail_message = last_error or "AI sedang sibuk atau kuota habis. Coba lagi 1 menit lagi."
+            raise HTTPException(status_code=503, detail=detail_message)
 
         # Tambahkan ini sebentar buat cek
         # print("Cek model yang tersedia...")

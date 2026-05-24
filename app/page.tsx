@@ -60,7 +60,12 @@ export default function Home() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("/api/convert", { method: "POST", body: formData });
+      const apiUrl =
+        process.env.NODE_ENV === "development"
+          ? "http://127.0.0.1:8000/api/convert"
+          : "/api/convert";
+
+      const response = await fetch(apiUrl, { method: "POST", body: formData });
       
       if (!response.ok) {
         const errorText = await response.text();
